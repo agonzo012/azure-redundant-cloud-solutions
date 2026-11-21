@@ -23,22 +23,24 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 
 ### Module 1 — Build Network Infrastructure
 
-**Lab 1 — Deploy a Resource Group in Azure for the Project (done, in the labITpro simulation)**
+**Lab 1 — Deploy a Resource Group in Azure for the Project (done, in the labITpro simulation and in real Azure)**
 - Create a resource group to hold the project's resources.
 - Created a resource group named **RG-Lab** in **East US**
-- Subscription in the simulation: Surf City Boats
+- Subscription in the simulation: Surf City Boats; in real Azure: Azure subscription 1
 - Steps: Resource groups → + Create → name RG-Lab → Review + create → Create
 - Result: "Resource group created — Creating resource group 'RG-Lab' in
-  subscription 'Surf City Boats' succeeded"
+  subscription 'Surf City Boats' succeeded" (simulation); real Azure confirmed
+  "Creating resource group 'RG-Lab' in subscription 'Azure subscription 1' succeeded"
 - Screenshot: lab1-resource-group-screenshot.pdf
-- Note: this was the guided simulation. The real-Azure version of this
-  resource group is the next step and costs nothing (a resource group is free).
+- Note: a resource group is free.
 
-**Lab 2 — Deploy a Virtual Network and Subnet in West US** — next
+**Lab 2 — Deploy a Virtual Network and Subnet in West US (done in real Azure)**
 - Create a virtual network and subnet in West US for the web app's west-region resources.
+- VNet **vNet-West**, RG-Lab, West US, address space **10.0.0.0/16**, subnet **Subnet-West 10.0.1.0/24** (251 available IPs).
 
-**Lab 3 — Deploy a Virtual Network and Subnet in East US** — next
+**Lab 3 — Deploy a Virtual Network and Subnet in East US (done in real Azure)**
 - Create a virtual network and subnet in East US for the web app's east-region resources.
+- VNet **vNet-East**, RG-Lab, East US, address space **10.1.0.0/16**, subnet **Subnet-East 10.1.1.0/24** (251 available IPs).
 
 **Lab 4 — Deploy a NAT Gateway in the West US Region** — next
 - Deploy a NAT gateway so west-region VMs can reach the internet outbound.
