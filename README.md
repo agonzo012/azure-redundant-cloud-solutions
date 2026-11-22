@@ -66,7 +66,7 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 
 **Lab 8 — Deploy and Configure a Public Load Balancer in West US (done in real Azure)**
 - Deploy and configure a public load balancer to spread traffic across the west-region VMs.
-- Load balancer **LB-West**, RG-Lab, West US, SKU Standard, Type Public. Frontend **FE-LBWest**, public IP **PIP-LBWest** (Static, Standard, IPv4). Backend pool **BE-LBWest** (vNet-West, NIC-based) — WEST01 added in Lab 10; WEST02 follows in Lab 12. Health probe **HealthHTTP** (HTTP, port 80). Load balancing rule **InboundHTTP** (TCP, frontend port 80 → backend port 80, TCP Reset off).
+- Load balancer **LB-West**, RG-Lab, West US, SKU Standard, Type Public. Frontend **FE-LBWest**, public IP **PIP-LBWest** (Static, Standard, IPv4). Backend pool **BE-LBWest** (vNet-West, NIC-based) — WEST01 (Lab 10) and WEST02 (Lab 12) both added. Health probe **HealthHTTP** (HTTP, port 80). Load balancing rule **InboundHTTP** (TCP, frontend port 80 → backend port 80, TCP Reset off).
 - Note: Lab 8 does not name the frontend, public IP, backend pool, probe, or rule, so the Lab 9 naming pattern was used for consistency.
 
 **Lab 9 — Deploy and Configure a Public Load Balancer in East US (done in real Azure)**
@@ -83,11 +83,13 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 - Install the IIS web server on WEST01 remotely using PowerShell.
 - Run Command (RunPowerShellScript): `Install-WindowsFeature -Name Web-Server -IncludeManagementTools`. Result: Success, no restart needed. W3SVC service Running; Web-Server feature Installed; HTTP GET http://localhost returned 200. Verified publicly: the default IIS welcome page loads at http://172.184.161.146/ — the LB-West frontend IP, proving the load balancer is already serving traffic from WEST01.
 
-**Lab 12 — Deploy and Configure the WEST02 Virtual Machine** — next
+**Lab 12 — Deploy and Configure the WEST02 Virtual Machine (done in real Azure)**
 - Deploy and configure the second virtual machine in West US.
+- VM **WEST02**, RG-Lab, West US, Running. OS: Windows Server 2019 Datacenter Gen2. Size **Standard_D2s_v6** (2 vCPUs, 8 GiB) at $0.21/hour — same D2s_v3 substitution as WEST01. Availability set **AvailSet-West** (existing), fault domain 1 — WEST01 is fault domain 0, so the two VMs sit in different fault domains, which is the point of the availability set. vNet **vNet-West**, subnet **Subnet-West** (10.0.1.0/24); NIC **west02968**, private IP **10.0.1.5**, no NIC-level public IP (public IP quota exhausted). NSG **WEST02-nsg** (new, Advanced) with inbound rules allow RDP (TCP 3389, portal default) and allow HTTP (TCP 80, lab-required). Added to load balancer **LB-West**, backend pool **BE-LBWest**. OS disk Premium SSD. Admin username **labadmin**, same password as WEST01 per the standing rule.
 
-**Lab 13 — Install IIS on WEST02 Remotely via PowerShell** — next
+**Lab 13 — Install IIS on WEST02 Remotely via PowerShell (done in real Azure)**
 - Install the IIS web server on WEST02 remotely using PowerShell.
+- Run Command (RunPowerShellScript): `Install-WindowsFeature -Name Web-Server -IncludeManagementTools`. Result: Success, no restart needed. W3SVC service Running (Automatic); HTTP GET http://localhost returned 200. Verified publicly: the default IIS welcome page loads at http://172.184.161.146/ — the LB-West frontend IP, now serving from both WEST01 and WEST02.
 
 ### Module 5 — Deploy Resilient Azure VMs in East US
 
@@ -181,6 +183,7 @@ multi-region infrastructure, not just a single VM.
 - **StandardV2 NAT gateway SKU (portal default).** No premium tier is needed for a lab; the standard SKU covers the outbound traffic the labs generate.
 - **VM size D2s_v6 instead of the lab's D2s_v3.** Azure refused D2s_v3 in West US for this subscription, so the current-generation equivalent was used — same 2 vCPUs and 8 GiB of RAM, effectively the same price. The lab's intent (a small general-purpose VM) is unchanged.
 - **No public IP on the WEST01 network interface.** The subscription's public IP quota is exhausted (four public IPs already exist), so WEST01 was created without a NIC-level public IP. It is reached through the LB-West frontend IP instead, which matches the design: VMs stay private behind the load balancer, and the NAT gateway handles outbound traffic.
+- **Both west VMs in one availability set, in different fault domains.** WEST01 is fault domain 0 and WEST02 is fault domain 1, so a single rack-level failure cannot take both web servers down at once. That is the availability set doing its job.
 
 ## What Went Wrong
 
