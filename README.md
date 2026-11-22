@@ -33,34 +33,41 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
   "Creating resource group 'RG-Lab' in subscription 'Azure subscription 1' succeeded"
 - Screenshot: [lab1-resource-group-screenshot.pdf](lab1-resource-group-screenshot.pdf)
 - Note: a resource group is free.
+- Outcome: RG-Lab is live in East US — the portal shows it (screenshot above), and all 29 labs' resources were built inside it.
 
 **Lab 2 — Deploy a Virtual Network and Subnet in West US (done in real Azure)**
 - Create a virtual network and subnet in West US for the web app's west-region resources.
 - VNet **vNet-West**, RG-Lab, West US, address space **10.0.0.0/16**, subnet **Subnet-West 10.0.1.0/24** (251 available IPs).
+- Outcome: vNet-West is live in West US with Subnet-West (10.0.1.0/24) — the network the west VMs, load balancer, NAT gateway and Bastion all attach to.
 
 **Lab 3 — Deploy a Virtual Network and Subnet in East US (done in real Azure)**
 - Create a virtual network and subnet in East US for the web app's east-region resources.
 - VNet **vNet-East**, RG-Lab, East US, address space **10.1.0.0/16**, subnet **Subnet-East 10.1.1.0/24** (251 available IPs).
+- Outcome: vNet-East is live in East US with Subnet-East (10.1.1.0/24) — the network the east VMs, load balancer and NAT gateway all attach to.
 
 **Lab 4 — Deploy a NAT Gateway in the West US Region (done in real Azure)**
 - Deploy a NAT gateway so west-region VMs can reach the internet outbound.
 - NAT gateway **NAT-West**, RG-Lab, West US, SKU StandardV2, TCP idle timeout 4 minutes. Public IP **PIP-NATWest** (Static, Standard, IPv4). Associated subnet: vNet-West / Subnet-West (10.0.1.0/24).
+- Outcome: NAT-West is live with public IP 172.185.200.220 — west VMs reach the internet outbound through it.
 
 **Lab 5 — Deploy a NAT Gateway in the East US Region (done in real Azure)**
 - Deploy a NAT gateway so east-region VMs can reach the internet outbound.
 - NAT gateway **NAT-East**, RG-Lab, East US, SKU StandardV2, TCP idle timeout 4 minutes. Public IP **PIP-NATEast** (Static, Standard, IPv4). Associated subnet: vNet-East / Subnet-East (10.1.1.0/24).
 - The two NAT gateways bill about $0.09/hour combined while they exist; they will be deleted with the RG-Lab resources when the labs are finished.
+- Outcome: NAT-East is live with public IP 48.195.153.195 — east VMs reach the internet outbound through it.
 
 ### Module 2 — Deploy Azure Bastion
 
 **Lab 6 — Connect Virtual Networks with vNet Peering (done in real Azure)**
 - Connect the West US and East US virtual networks so they can talk to each other.
 - Peering **vNetEast-vNetWest** on vNet-West and reciprocal peering **vNetWest-vNetEast** on vNet-East, both Fully Synchronized and Connected, virtual network access and forwarded traffic enabled in both directions.
+- Outcome: Both peerings show Connected and Fully Synchronized — the West and East VNets can talk to each other.
 
 **Lab 7 — Perform an Automated Azure Bastion Deployment (done in real Azure)**
 - Deploy Azure Bastion automatically for secure RDP/SSH access to the VMs without public IPs.
 - Bastion host **vNet-West-bastion**, RG-Lab, West US, SKU Standard, Provisioning Succeeded. The automated flow auto-created the **AzureBastionSubnet** and public IP **vNet-West-IPv4**.
 - Cost note: the automated flow fixes the SKU at Standard ($0.29/hour) with no SKU choice, so the free Developer SKU could not be used here. Delete the Bastion host when it is no longer needed to stop the hourly charge.
+- Outcome: Bastion host vNet-West-bastion is provisioned (Succeeded) — secure RDP to the VMs without public IPs.
 
 ### Module 3 — Deploy and Configure Load Balancers
 
@@ -68,60 +75,73 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 - Deploy and configure a public load balancer to spread traffic across the west-region VMs.
 - Load balancer **LB-West**, RG-Lab, West US, SKU Standard, Type Public. Frontend **FE-LBWest**, public IP **PIP-LBWest** (Static, Standard, IPv4). Backend pool **BE-LBWest** (vNet-West, NIC-based) — WEST01 (Lab 10) and WEST02 (Lab 12) both added. Health probe **HealthHTTP** (HTTP, port 80). Load balancing rule **InboundHTTP** (TCP, frontend port 80 → backend port 80, TCP Reset off).
 - Note: Lab 8 does not name the frontend, public IP, backend pool, probe, or rule, so the Lab 9 naming pattern was used for consistency.
+- Outcome: LB-West is live with frontend public IP 172.184.161.146 — backend pool BE-LBWest holds WEST01 and WEST02, and the HealthHTTP probe watches port 80.
 
 **Lab 9 — Deploy and Configure a Public Load Balancer in East US (done in real Azure)**
 - Deploy and configure a public load balancer to spread traffic across the east-region VMs.
 - Load balancer **LB-East**, RG-Lab, East US, SKU Standard, Type Public. Frontend **FE-LBEast**, public IP **PIP-LBEast** (Static, Standard, IPv4). Backend pool **BE-LBEast** (vNet-East, IP address configuration as the lab specifies) — EAST01 (Lab 14) and EAST02 (Lab 16) both added. Health probe **HealthHTTP** (HTTP, port 80). Load balancing rule **InboundHTTP** (TCP, frontend port 80 → backend port 80, TCP Reset enabled).
+- Outcome: LB-East is live with frontend public IP 48.217.132.155 — backend pool BE-LBEast holds EAST01 and EAST02, and the HealthHTTP probe watches port 80.
 
 ### Module 4 — Deploy Resilient Azure VMs in West US
 
 **Lab 10 — Deploy and Configure the WEST01 Virtual Machine (done in real Azure)**
 - Deploy and configure the first virtual machine in West US.
 - VM **WEST01**, RG-Lab, West US, Running. OS: Windows Server 2019 Datacenter Gen2. Size **Standard_D2s_v6** (2 vCPUs, 8 GiB) at $0.21/hour — the lab's Standard_D2s_v3 is unavailable in West US for this subscription, so the current-generation equivalent was used (same 2 vCPUs and 8 GiB, effectively the same price). Availability set **AvailSet-West** (new). vNet **vNet-West**, subnet **Subnet-West** (10.0.1.0/24); NIC **west01502**, private IP **10.0.1.4**, no NIC-level public IP — the subscription's public IP quota is exhausted, so the VM is reached through the LB-West frontend IP instead. NSG **WEST01-nsg** (new, Advanced) with inbound rules allow RDP (TCP 3389, portal default) and allow HTTP (TCP 80, lab-required). Added to load balancer **LB-West**, backend pool **BE-LBWest**. OS disk Premium SSD, 127 GiB. Admin username **labadmin**.
+- Outcome: WEST01 is Running in West US (private IP 10.0.1.4) and serves web traffic through LB-West at 172.184.161.146.
 
 **Lab 11 — Install IIS on WEST01 Remotely via PowerShell (done in real Azure)**
 - Install the IIS web server on WEST01 remotely using PowerShell.
 - Run Command (RunPowerShellScript): `Install-WindowsFeature -Name Web-Server -IncludeManagementTools`. Result: Success, no restart needed. W3SVC service Running; Web-Server feature Installed; HTTP GET http://localhost returned 200. Verified publicly: the default IIS welcome page loads at http://172.184.161.146/ — the LB-West frontend IP, proving the load balancer is already serving traffic from WEST01.
+- Outcome: IIS is installed and running on WEST01 — the default IIS page loads through the LB-West frontend IP.
 
 **Lab 12 — Deploy and Configure the WEST02 Virtual Machine (done in real Azure)**
 - Deploy and configure the second virtual machine in West US.
 - VM **WEST02**, RG-Lab, West US, Running. OS: Windows Server 2019 Datacenter Gen2. Size **Standard_D2s_v6** (2 vCPUs, 8 GiB) at $0.21/hour — same D2s_v3 substitution as WEST01. Availability set **AvailSet-West** (existing), fault domain 1 — WEST01 is fault domain 0, so the two VMs sit in different fault domains, which is the point of the availability set. vNet **vNet-West**, subnet **Subnet-West** (10.0.1.0/24); NIC **west02968**, private IP **10.0.1.5**, no NIC-level public IP (public IP quota exhausted). NSG **WEST02-nsg** (new, Advanced) with inbound rules allow RDP (TCP 3389, portal default) and allow HTTP (TCP 80, lab-required). Added to load balancer **LB-West**, backend pool **BE-LBWest**. OS disk Premium SSD. Admin username **labadmin**, same password as WEST01 per the standing rule.
+- Outcome: WEST02 is Running in West US (private IP 10.0.1.5) in fault domain 1 — the second web server behind LB-West.
 
 **Lab 13 — Install IIS on WEST02 Remotely via PowerShell (done in real Azure)**
 - Install the IIS web server on WEST02 remotely using PowerShell.
 - Run Command (RunPowerShellScript): `Install-WindowsFeature -Name Web-Server -IncludeManagementTools`. Result: Success, no restart needed. W3SVC service Running (Automatic); HTTP GET http://localhost returned 200. Verified publicly: the default IIS welcome page loads at http://172.184.161.146/ — the LB-West frontend IP, now serving from both WEST01 and WEST02.
+- Outcome: IIS is installed and running on WEST02 — the IIS page loads through LB-West, now serving from both west VMs.
 
 ### Module 5 — Deploy Resilient Azure VMs in East US
 
 **Lab 14 — Deploy and Configure the EAST01 Virtual Machine (done in real Azure)**
 - Deploy and configure the first virtual machine in East US.
 - VM **EAST01**, RG-Lab, East US, Running. OS: Windows Server 2019 Datacenter Gen2. Size **Standard_D2s_v7** (2 vCPUs, 8 GiB) at $0.2240/hour — both the lab's Standard_D2s_v3 and the west fallback Standard_D2s_v6 are unavailable in East US for this subscription, so the next-generation equivalent was used (same 2 vCPUs and 8 GiB). Availability set **AvailSet-East** (new), fault domain 0. vNet **vNet-East**, subnet **Subnet-East** (10.1.1.0/24); NIC **east01565**, private IP **10.1.1.4**, no NIC-level public IP (public IP quota exhausted). NSG **EAST01-nsg** (new, Advanced) with inbound rules AllowHTTP (TCP 80, priority 100) and default-allow-rdp (TCP 3389, priority 1000). Added to load balancer **LB-East**, backend pool **BE-LBEast**. OS disk Standard SSD. Admin username **labadmin**, same password as the west VMs per the standing rule.
+- Outcome: EAST01 is Running in East US (private IP 10.1.1.4) and serves web traffic through LB-East at 48.217.132.155.
 
 **Lab 15 — Install IIS on EAST01 Remotely via PowerShell (done in real Azure)**
 - Install the IIS web server on EAST01 remotely using PowerShell.
 - Run Command (RunPowerShellScript): `Install-WindowsFeature -Name Web-Server -IncludeManagementTools`. Result: Success, no restart needed. W3SVC service Running; HTTP GET http://localhost returned 200. Verified publicly: the default IIS welcome page loads at http://48.217.132.155/ — the LB-East frontend IP.
+- Outcome: IIS is installed and running on EAST01 — the default IIS page loads through the LB-East frontend IP.
 
 **Lab 16 — Deploy and Configure the EAST02 Virtual Machine (done in real Azure)**
 - Deploy and configure the second virtual machine in East US.
 - VM **EAST02**, RG-Lab, East US, Running. OS: Windows Server 2019 Datacenter Gen2. Size **Standard_D2s_v7** (2 vCPUs, 8 GiB) at $0.2240/hour — matches EAST01 (D2s_v3 and D2s_v6 are unavailable in East US). Availability set **AvailSet-East** (existing), fault domain 1 — EAST01 is fault domain 0, so the two east VMs sit in different fault domains. vNet **vNet-East**, subnet **Subnet-East** (10.1.1.0/24); NIC **east0211**, private IP **10.1.1.5**, no NIC-level public IP (public IP quota exhausted). NSG **EAST02-nsg** (new, Advanced) with inbound rules AllowHTTP (TCP 80, priority 100) and default-allow-rdp (TCP 3389, priority 1000) — matches EAST01-nsg exactly. Added to load balancer **LB-East**, backend pool **BE-LBEast**, which now holds both east VMs. OS disk Standard SSD, 127 GiB (verified on the final Review page). Admin username **labadmin**, same password as the other VMs per the standing rule.
+- Outcome: EAST02 is Running in East US (private IP 10.1.1.5) in fault domain 1 — the second web server behind LB-East.
 
 **Lab 17 — Install IIS on EAST02 Remotely via PowerShell (done in real Azure)**
 - Install the IIS web server on EAST02 remotely using PowerShell.
 - Run Command (RunPowerShellScript): `Install-WindowsFeature -Name Web-Server -IncludeManagementTools`. Result: Success, no restart needed. W3SVC service Running; HTTP GET http://localhost returned 200. Verified publicly: the default IIS welcome page loads at http://48.217.132.155/ — the LB-East frontend IP, now serving from both EAST01 and EAST02.
+- Outcome: IIS is installed and running on EAST02 — the IIS page loads through LB-East, now serving from both east VMs.
 
 ### Module 6 — Test Load Balancers
 
 **Lab 18 — Ensure Virtual Machine IP Addresses Are Static (done in real Azure)**
 - Change the VMs' IP addresses from dynamic to static so load balancer rules stay stable.
 - All four NICs changed from Dynamic to Static, keeping the same addresses: WEST01 10.0.1.4, WEST02 10.0.1.5, EAST01 10.1.1.4, EAST02 10.1.1.5. Portal confirmed "Successfully updated network interface" for each, and a final re-check confirmed all four Static.
+- Outcome: All four NICs are Static with the same addresses — the load balancer backends stay stable across reboots.
 
 **Lab 19 — Test Load Balancing Functionality in West US (done in real Azure)**
 - Verify the west-region load balancer spreads traffic across WEST01 and WEST02.
 - Test page `C:\inetpub\wwwroot\testpage.htm` created on both VMs (shows the server name). LB-West frontend 172.184.161.146: this browser consistently got WEST02, and EAST01 as a second client consistently got WEST01 — both backends served traffic through the same frontend IP. Health status 100%, both instances Up. Failover test: IIS stopped on WEST01, traffic went to WEST02; IIS restarted and confirmed Running.
+- Outcome: LB-West distributes traffic across WEST01 and WEST02 (both served through 172.184.161.146) and fails over when one VM's IIS stops — health 100%, both instances Up.
 
 **Lab 20 — Test Load Balancing Functionality in East US (done in real Azure)**
 - Verify the east-region load balancer spreads traffic across EAST01 and EAST02.
 - Same test page on both east VMs. LB-East frontend 48.217.132.155: this browser consistently got EAST01, and WEST01 as a second client consistently got EAST02 — both backends served traffic. Failover test: IIS stopped on EAST01, traffic went to EAST02; IIS restarted and confirmed Running. Health status 100%, both instances Up.
+- Outcome: LB-East distributes traffic across EAST01 and EAST02 (both served through 48.217.132.155) and fails over when one VM's IIS stops — health 100%, both instances Up.
 
 ### Module 7 — Deploy and Configure Azure Blob Storage
 
@@ -129,17 +149,20 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 - Deploy blob storage in West US for the app's files.
 - Storage account **surfcitywest999ag**, West US, StorageV2, Standard performance, RA-GRS replication (Standard_RAGRS), Hot access tier, public network access from all networks, blob anonymous access Enabled, storage account key access Disabled, blob versioning Enabled, blob change feed Enabled. Container **images** created with anonymous access level Container (public read). Deployment succeeded Nov 21, 10:50 PM.
 - The lab's name surfcitywest999 was already taken globally, so the suffix "ag" was added.
+- Outcome: surfcitywest999ag is live in West US with the public 'images' container — the source for object replication.
 
 **Lab 22 — Deploy Blob Storage in the East US Region (done in real Azure)**
 - Deploy blob storage in East US for the app's files.
 - Storage account **surfcityeast999ag**, East US, same settings (StorageV2, Standard, RA-GRS, Hot, public all networks, anonymous access Enabled, key access Disabled), blob versioning Enabled, change feed Disabled (destination). Container **images** created with access level Container. Deployment succeeded Nov 21, 10:55 PM.
 - The lab's name surfcityeast999 was already taken globally, so the suffix "ag" was added.
+- Outcome: surfcityeast999ag is live in East US with the public 'images' container — the destination for object replication.
 
 **Lab 23 — Configure Blob Storage Object Replication Between Regions (done in real Azure)**
 - Configure object replication so blobs in one region copy to the other.
 - Replication policy from surfcitywest999ag/images to surfcityeast999ag/images, Copy over = Everything (the portal's current wording for the lab's "All — New and updated"), 0 filters, tags/priority/metrics not enabled. Policy ID e718197e-2510-4c79-bb12-7ee7e42a07e4; Rule ID 7f87b8db-6e1f-4114-8721-b68c3eb5cc0b.
 - Replication verified live: test image [lab23-test-image.png](lab23-test-image.png) uploaded to the West container at 11:06 PM and appeared in the East container at 11:08 PM, about two minutes later.
 - The labs assign Storage Blob Data Contributor to "Thomas Mitchell", but no such user exists in the tenant — so the role was assigned to the signed-in account instead on both storage accounts (needed for Entra ID auth uploads, since key access is disabled). If Thomas Mitchell is added to the tenant later, the same role can be assigned to him.
+- Outcome: Replication works — a test image uploaded to West appeared in East about two minutes later ([lab23-test-image.png](lab23-test-image.png)).
 
 ### Module 8 — Deploy and Configure Azure Front Door CDN
 
@@ -149,16 +172,19 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 - This lab required upgrading the subscription from the free trial to pay-as-you-go first — Azure refuses Front Door on a trial subscription ("Free Trial and Student account is forbidden for Azure Frontdoor resources"). The upgrade was approved by Jet, used the payment method already on file, kept the free Basic support plan, and the remaining $199.46 credit stays good until Dec 21, 2026.
 - The lab writes the origin host as surfcitywest999.blob.core.windows.net, but the real storage account is surfcitywest999ag, so the portal's dropdown value was used.
 - Deleted Nov 22, 12:33 AM, after the work was documented in this README — the profile billed about $35/month, so it was removed to stop the charge. The deletion was verified: RG-Lab shows no WebsiteImages resource and the subscription's Front Door list is empty.
+- Outcome: The Front Door profile deployed and its endpoint went live (see Lab 25 for the serving test); it was deleted after documentation to stop the ~$35/month charge.
 
 **Lab 25 — Add a Second Origin to the Azure Front Door CDN (done in real Azure)**
 - Add the second region as another origin so Front Door can fail over between regions.
 - Second origin "surfcityeast" added to default-origin-group: origin host surfcityeast999ag.blob.core.windows.net, certificate subject name validation Disabled, HTTP 80 / HTTPS 443, priority 1, weight 1000, origin enabled. Portal confirmed "Successfully updated the origin group 'default-origin-group'." Both origins are in place, both Enabled, priority 1, weight 1000. Health probes enabled (HTTP, path /, HEAD, 100-second interval).
 - Endpoint test: the Front Door endpoint initially returned "Page not found — configuration not ready yet" while the back-to-back changes propagated (up to 30 minutes). At 12:11 AM Nov 22, https://images-etc9c7ckagaqghgv.z03.azurefd.net/images/lab23-test-image.png served the image successfully. The lab's test file images/15822998_m.jpg does not exist in the real storage accounts, so the Lab 23 test image was used instead. Note: this Front Door endpoint serves blob images, not the IIS page — the IIS page lives on the VMs/load balancers.
+- Outcome: The Front Door endpoint served the Lab 23 test image at https://images-etc9c7ckagaqghgv.z03.azurefd.net/images/lab23-test-image.png — both origins (West and East storage) in place and Enabled.
 
 **Lab 26 — Configure a Custom Domain Name for AFD CDN (done up to DNS validation; blocked)**
 - Configure a custom domain name for the Front Door CDN endpoint.
 - Custom domain img.surfcityboats.com was added to the Front Door profile (resource img-surfcityboats-com-9bf7, Provisioning Succeeded, AFD managed certificate, TLS 1.2_2023), using "All other DNS services" so no Azure DNS zone was created. It shows Validation state Pending, Endpoint association Unassociated, Certificate state "Domain validation needed".
 - Blocked: validation requires a TXT record (_dnsauth.img.surfcityboats.com = _piovqz23xh2afl12ojjvi7wfhfmlu19) plus the lab's GoDaddy name-server delegation and a CNAME to the Front Door endpoint — and Jet does not own surfcityboats.com (it is the course's fictional company domain) and has no GoDaddy DNS access. No DNS zone was created and no DNS records were added anywhere; no domain was registered, bought, or invented. To finish, whoever controls surfcityboats.com would add that TXT record, wait for validation, then add the CNAME.
+- Outcome: Blocked — the custom domain sits at Validation Pending because the TXT record can only be added by whoever owns surfcityboats.com.
 
 ### Module 9 — Deploy and Configure Azure Traffic Manager
 
@@ -166,14 +192,17 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 - Create and configure a Traffic Manager profile to route traffic between regions.
 - Traffic Manager profile **scbwebsite**, DNS name scbwebsite.trafficmanager.net, routing method Performance, record type A - IPv4, resource group location East US, status Enabled. Deployment succeeded Nov 22, 12:52 AM.
 - Endpoints (both External endpoint type, health checks enabled): Endpoint-West → 172.184.161.146 (LB-West frontend IP), West US, Enabled, Online; Endpoint-East → 48.217.132.155 (LB-East frontend IP), East US, Enabled, Online. DNS TTL 60 seconds; monitor HTTP port 80, path /, 30-second probing interval, 3 tolerated failures, 10-second probe timeout, expected status code 200.
+- Outcome: scbwebsite.trafficmanager.net is live with both endpoints Enabled and Online — LB-West (172.184.161.146) and LB-East (48.217.132.155).
 
 **Lab 28 — Confirm Functionality of Azure Traffic Manager (done in real Azure)**
 - Verify Traffic Manager routes traffic and fails over as expected.
 - http://scbwebsite.trafficmanager.net/testpage.htm initially returned "Server: EAST02" (Performance routing to East via LB-East). Failover test: Endpoint-East was temporarily disabled in Traffic Manager (no VM was stopped). While East was disabled, Google's public DNS resolver returned only 172.184.161.146 (LB-West), and a fresh browser request returned "Server: WEST01" — traffic failed over to the West region. Endpoint-East was then re-enabled. Final state: both endpoints Enabled and Online. A final test returned "Server: EAST01", matching the lab's own expected result.
+- Outcome: Traffic Manager routes to the nearest region (EAST02, then EAST01 after re-enable) and fails over to WEST01 when the East endpoint is disabled — matching the lab's expected result.
 
 **Lab 29 — Configure a Custom Domain for Traffic Manager (blocked)**
 - Configure a custom domain for the Traffic Manager profile.
 - Blocked: the lab asks for a CNAME record in GoDaddy DNS Management for surfcityboats.com — Name "quote", Value "scbwebsite.trafficmanager.net", TTL 1/2 Hour — making quote.surfcityboats.com point at the Traffic Manager profile. Jet does not own surfcityboats.com and has no GoDaddy DNS access for it. No domain was registered or bought, nothing was invented, and GoDaddy was not touched. To finish, Jet would need to own surfcityboats.com (or its GoDaddy DNS access) and add that CNAME, or choose a domain he does own.
+- Outcome: Blocked — the CNAME can only be added by whoever owns surfcityboats.com in GoDaddy.
 
 **Cleanup — RG-Lab deleted Nov 22, 1:19 AM, after all 29 labs were documented in this README.** The whole resource group (33 resources: 4 VMs, 2 load balancers, 2 NAT gateways, Bastion, VNets, storage accounts, Traffic Manager profile, NSGs, public IPs) was deleted to stop the ~$1.30/hour burn. Verified: the subscription's resource group list now shows only AlvinLab-RG and NetworkWatcherRG. Nothing outside RG-Lab was touched.
 
