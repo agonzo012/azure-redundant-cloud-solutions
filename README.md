@@ -111,14 +111,17 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 
 ### Module 6 — Test Load Balancers
 
-**Lab 18 — Ensure Virtual Machine IP Addresses Are Static** — next
+**Lab 18 — Ensure Virtual Machine IP Addresses Are Static (done in real Azure)**
 - Change the VMs' IP addresses from dynamic to static so load balancer rules stay stable.
+- All four NICs changed from Dynamic to Static, keeping the same addresses: WEST01 10.0.1.4, WEST02 10.0.1.5, EAST01 10.1.1.4, EAST02 10.1.1.5. Portal confirmed "Successfully updated network interface" for each, and a final re-check confirmed all four Static.
 
-**Lab 19 — Test Load Balancing Functionality in West US** — next
+**Lab 19 — Test Load Balancing Functionality in West US (done in real Azure)**
 - Verify the west-region load balancer spreads traffic across WEST01 and WEST02.
+- Test page `C:\inetpub\wwwroot\testpage.htm` created on both VMs (shows the server name). LB-West frontend 172.184.161.146: this browser consistently got WEST02, and EAST01 as a second client consistently got WEST01 — both backends served traffic through the same frontend IP. Health status 100%, both instances Up. Failover test: IIS stopped on WEST01, traffic went to WEST02; IIS restarted and confirmed Running.
 
-**Lab 20 — Test Load Balancing Functionality in East US** — next
+**Lab 20 — Test Load Balancing Functionality in East US (done in real Azure)**
 - Verify the east-region load balancer spreads traffic across EAST01 and EAST02.
+- Same test page on both east VMs. LB-East frontend 48.217.132.155: this browser consistently got EAST01, and WEST01 as a second client consistently got EAST02 — both backends served traffic. Failover test: IIS stopped on EAST01, traffic went to EAST02; IIS restarted and confirmed Running. Health status 100%, both instances Up.
 
 ### Module 7 — Deploy and Configure Azure Blob Storage
 
@@ -190,6 +193,8 @@ multi-region infrastructure, not just a single VM.
 - **Both west VMs in one availability set, in different fault domains.** WEST01 is fault domain 0 and WEST02 is fault domain 1, so a single rack-level failure cannot take both web servers down at once. That is the availability set doing its job.
 - **EAST01 uses D2s_v7.** Both D2s_v3 and D2s_v6 are unavailable in East US for this subscription, so the next-generation equivalent was used — same 2 vCPUs and 8 GiB, slightly higher at $0.2240/hour vs $0.1930/hour for D2s_v6. The lab's intent (a small general-purpose VM) is unchanged; the east and west VMs do not need identical sizes.
 - **Both east VMs in one availability set, in different fault domains.** EAST01 is fault domain 0 and EAST02 is fault domain 1, mirroring the west pair. Each region now has two web servers that cannot both fall to a single rack-level failure.
+- **Static private IPs for all four VMs.** Dynamic addresses could change on reboot and break the load balancer backend mappings, so each NIC was set to Static with the same address it already had.
+- **A test page showing the server name.** `testpage.htm` on each VM prints its own computer name, so any request through the load balancer shows exactly which backend VM answered — the simplest way to prove traffic is being distributed.
 
 ## What Went Wrong
 
@@ -206,3 +211,4 @@ multi-region infrastructure, not just a single VM.
 - **Both D2s_v3 and D2s_v6 are unavailable in East US for this subscription.** EAST01 uses D2s_v7 instead — verified in the portal size picker under both Trusted Launch and Standard security. Same 2 vCPUs and 8 GiB, $0.2240/hour.
 - **The OS disk type selection did not stick on the first pass for EAST01.** The first Review page showed Premium SSD even though Standard SSD had been selected. It was caught on review, re-selected to Standard SSD, and verified on the final Review page before creating. Always check the Review page, not just the form.
 - **The VM size quotas are now fully used in both regions.** The Standard Dsv7 family vCPU quota in East US is exhausted (0 of 4 remain) after EAST01 and EAST02, and D2s_v6 in West US shows insufficient regional quota for new deployments. No more VMs are needed for the labs, so this blocks nothing — but no additional VM can be created in either region without a quota increase.
+- **Repeated refreshes from one browser did NOT alternate between backends.** Azure's load balancer distributes by a 5-tuple hash (source IP, source port, destination IP, destination port, protocol), so one client gets pinned to one backend. This is expected Azure behavior, not a misconfiguration. To prove both backends serve, a second client (another VM) was used, and the failover test — stopping IIS on one VM and watching traffic reroute to the other — proved the load balancer works.
