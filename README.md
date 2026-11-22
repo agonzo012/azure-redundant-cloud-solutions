@@ -64,11 +64,14 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 
 ### Module 3 — Deploy and Configure Load Balancers
 
-**Lab 8 — Deploy and Configure a Public Load Balancer in West US** — next
+**Lab 8 — Deploy and Configure a Public Load Balancer in West US (done in real Azure)**
 - Deploy and configure a public load balancer to spread traffic across the west-region VMs.
+- Load balancer **LB-West**, RG-Lab, West US, SKU Standard, Type Public. Frontend **FE-LBWest**, public IP **PIP-LBWest** (Static, Standard, IPv4). Backend pool **BE-LBWest** (vNet-West, NIC-based), currently empty — no VMs exist yet; WEST01 and WEST02 are added in later labs. Health probe **HealthHTTP** (HTTP, port 80). Load balancing rule **InboundHTTP** (TCP, frontend port 80 → backend port 80, TCP Reset off).
+- Note: Lab 8 does not name the frontend, public IP, backend pool, probe, or rule, so the Lab 9 naming pattern was used for consistency.
 
-**Lab 9 — Deploy and Configure a Public Load Balancer in East US** — next
+**Lab 9 — Deploy and Configure a Public Load Balancer in East US (done in real Azure)**
 - Deploy and configure a public load balancer to spread traffic across the east-region VMs.
+- Load balancer **LB-East**, RG-Lab, East US, SKU Standard, Type Public. Frontend **FE-LBEast**, public IP **PIP-LBEast** (Static, Standard, IPv4). Backend pool **BE-LBEast** (vNet-East, IP address configuration as the lab specifies), currently empty — no VMs exist yet. Health probe **HealthHTTP** (HTTP, port 80). Load balancing rule **InboundHTTP** (TCP, frontend port 80 → backend port 80, TCP Reset enabled).
 
 ### Module 4 — Deploy Resilient Azure VMs in West US
 
@@ -183,3 +186,4 @@ multi-region infrastructure, not just a single VM.
 - **The simulation subscription is "Surf City Boats."** The real subscription is "Azure subscription 1" — the real one was used for every resource.
 - **The current portal's Add Peering form creates both directions in one operation.** The lab shows two separate steps; the form takes the local and remote link names together, so both peerings were set in one form with no lab value changed.
 - **The automated Bastion deployment fixes the SKU at Standard ($0.29/hour).** The lab does not name a SKU, and the automated flow offers no SKU choice. The free Developer SKU is only offered in the VM-connect flow, which needs a VM selected — there are no VMs yet, so it could not be used. The Bastion host will be deleted when it is no longer needed to stop the hourly charge.
+- **The portal defaulted LB-West's region to East US.** RG-Lab itself is located in East US, so the load balancer form defaulted there. It was caught before anything was deployed — the backend pool's virtual network list only offered vNet-East — and the region was set to West US explicitly. Nothing was ever deployed in the wrong region.
