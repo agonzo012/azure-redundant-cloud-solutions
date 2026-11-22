@@ -125,14 +125,21 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 
 ### Module 7 — Deploy and Configure Azure Blob Storage
 
-**Lab 21 — Deploy Blob Storage in the West US Region** — next
+**Lab 21 — Deploy Blob Storage in the West US Region (done in real Azure)**
 - Deploy blob storage in West US for the app's files.
+- Storage account **surfcitywest999ag**, West US, StorageV2, Standard performance, RA-GRS replication (Standard_RAGRS), Hot access tier, public network access from all networks, blob anonymous access Enabled, storage account key access Disabled, blob versioning Enabled, blob change feed Enabled. Container **images** created with anonymous access level Container (public read). Deployment succeeded Nov 21, 10:50 PM.
+- The lab's name surfcitywest999 was already taken globally, so the suffix "ag" was added.
 
-**Lab 22 — Deploy Blob Storage in the East US Region** — next
+**Lab 22 — Deploy Blob Storage in the East US Region (done in real Azure)**
 - Deploy blob storage in East US for the app's files.
+- Storage account **surfcityeast999ag**, East US, same settings (StorageV2, Standard, RA-GRS, Hot, public all networks, anonymous access Enabled, key access Disabled), blob versioning Enabled, change feed Disabled (destination). Container **images** created with access level Container. Deployment succeeded Nov 21, 10:55 PM.
+- The lab's name surfcityeast999 was already taken globally, so the suffix "ag" was added.
 
-**Lab 23 — Configure Blob Storage Object Replication Between Regions** — next
+**Lab 23 — Configure Blob Storage Object Replication Between Regions (done in real Azure)**
 - Configure object replication so blobs in one region copy to the other.
+- Replication policy from surfcitywest999ag/images to surfcityeast999ag/images, Copy over = Everything (the portal's current wording for the lab's "All — New and updated"), 0 filters, tags/priority/metrics not enabled. Policy ID e718197e-2510-4c79-bb12-7ee7e42a07e4; Rule ID 7f87b8db-6e1f-4114-8721-b68c3eb5cc0b.
+- Replication verified live: test image lab23-test-image.png uploaded to the West container at 11:06 PM and appeared in the East container at 11:08 PM, about two minutes later.
+- The labs assign Storage Blob Data Contributor to "Thomas Mitchell", but no such user exists in the tenant — so the role was assigned to the signed-in account instead on both storage accounts (needed for Entra ID auth uploads, since key access is disabled). If Thomas Mitchell is added to the tenant later, the same role can be assigned to him.
 
 ### Module 8 — Deploy and Configure Azure Front Door CDN
 
@@ -195,6 +202,10 @@ multi-region infrastructure, not just a single VM.
 - **Both east VMs in one availability set, in different fault domains.** EAST01 is fault domain 0 and EAST02 is fault domain 1, mirroring the west pair. Each region now has two web servers that cannot both fall to a single rack-level failure.
 - **Static private IPs for all four VMs.** Dynamic addresses could change on reboot and break the load balancer backend mappings, so each NIC was set to Static with the same address it already had.
 - **A test page showing the server name.** `testpage.htm` on each VM prints its own computer name, so any request through the load balancer shows exactly which backend VM answered — the simplest way to prove traffic is being distributed.
+- **Blob versioning on both accounts, change feed on the source only.** Versioning is required for object replication and is on both storage accounts; the change feed is enabled on the west (source) account and disabled on the east (destination), which is all replication needs.
+- **Storage account key access disabled; uploads use Entra ID auth.** With key access off, blob uploads need a role assignment (Storage Blob Data Contributor) rather than a key — a more secure pattern than the lab's key-based default.
+- **Storage account names carry an "ag" suffix.** The lab's names surfcitywest999 and surfcityeast999 were already taken globally (storage account names must be unique worldwide), so "ag" was added to both.
+- **Both storage accounts are Standard RA-GRS.** The lab text did not state performance or redundancy; the Lab 22 simulation showed Standard performance with geo-redundant storage and read access, so both accounts were created that way.
 
 ## What Went Wrong
 
@@ -212,3 +223,4 @@ multi-region infrastructure, not just a single VM.
 - **The OS disk type selection did not stick on the first pass for EAST01.** The first Review page showed Premium SSD even though Standard SSD had been selected. It was caught on review, re-selected to Standard SSD, and verified on the final Review page before creating. Always check the Review page, not just the form.
 - **The VM size quotas are now fully used in both regions.** The Standard Dsv7 family vCPU quota in East US is exhausted (0 of 4 remain) after EAST01 and EAST02, and D2s_v6 in West US shows insufficient regional quota for new deployments. No more VMs are needed for the labs, so this blocks nothing — but no additional VM can be created in either region without a quota increase.
 - **Repeated refreshes from one browser did NOT alternate between backends.** Azure's load balancer distributes by a 5-tuple hash (source IP, source port, destination IP, destination port, protocol), so one client gets pinned to one backend. This is expected Azure behavior, not a misconfiguration. To prove both backends serve, a second client (another VM) was used, and the failover test — stopping IIS on one VM and watching traffic reroute to the other — proved the load balancer works.
+- **The labs assign Storage Blob Data Contributor to "Thomas Mitchell", but no such user exists in the tenant.** The portal member search returned 0 results and the tenant's member list has no Thomas Mitchell. The role was assigned to the signed-in account instead on both storage accounts, which was needed for Entra ID auth uploads since key access is disabled. If Thomas Mitchell is added to the tenant later, the same role can be assigned to him.
