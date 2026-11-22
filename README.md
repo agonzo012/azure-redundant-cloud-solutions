@@ -42,11 +42,14 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 - Create a virtual network and subnet in East US for the web app's east-region resources.
 - VNet **vNet-East**, RG-Lab, East US, address space **10.1.0.0/16**, subnet **Subnet-East 10.1.1.0/24** (251 available IPs).
 
-**Lab 4 — Deploy a NAT Gateway in the West US Region** — next
+**Lab 4 — Deploy a NAT Gateway in the West US Region (done in real Azure)**
 - Deploy a NAT gateway so west-region VMs can reach the internet outbound.
+- NAT gateway **NAT-West**, RG-Lab, West US, SKU StandardV2, TCP idle timeout 4 minutes. Public IP **PIP-NATWest** (Static, Standard, IPv4). Associated subnet: vNet-West / Subnet-West (10.0.1.0/24).
 
-**Lab 5 — Deploy a NAT Gateway in the East US Region** — next
+**Lab 5 — Deploy a NAT Gateway in the East US Region (done in real Azure)**
 - Deploy a NAT gateway so east-region VMs can reach the internet outbound.
+- NAT gateway **NAT-East**, RG-Lab, East US, SKU StandardV2, TCP idle timeout 4 minutes. Public IP **PIP-NATEast** (Static, Standard, IPv4). Associated subnet: vNet-East / Subnet-East (10.1.1.0/24).
+- The two NAT gateways bill about $0.09/hour combined while they exist; they will be deleted with the RG-Lab resources when the labs are finished.
 
 ### Module 2 — Deploy Azure Bastion
 
