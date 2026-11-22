@@ -163,3 +163,18 @@ multi-region infrastructure, not just a single VM.
 - Lab 2 and Lab 3: build the West US and East US VNets and subnets
 - Continue through the remaining modules (VMs, load balancers, cross-region routing)
 - Recreate each lab in real Azure and screenshot it
+
+## Design Decisions
+
+- **Two regions (West US + East US).** The whole point of the project is surviving a regional outage, so the app lives in two regions and traffic routes between them. One region alone would not prove redundancy.
+- **Separate address spaces (10.0.0.0/16 West, 10.1.0.0/16 East).** The VNets must not overlap so they can be peered and so a subnet in one region is never confused with a subnet in the other.
+- **One resource group (RG-Lab) for the whole project.** Everything for the redundant app lives in one group, so it can be deleted in a single step to stop all charges when the labs are finished.
+- **A NAT gateway in each region.** The VMs get outbound internet through the NAT gateway instead of carrying their own public IPs, which keeps the VM network interfaces private.
+- **StandardV2 NAT gateway SKU (portal default).** No premium tier is needed for a lab; the standard SKU covers the outbound traffic the labs generate.
+
+## What Went Wrong
+
+- **Portal defaulted new subnets to "Private subnet: Enabled."** The labs do not mention this setting. It was left as the default — it creates no extra resource and adds no cost, and the NAT gateways provide the outbound path.
+- **Portal defaulted regions to West US 2 / East US 2.** The lab specifies West US and East US, so the exact regions were selected instead of accepting the defaults.
+- **vNet-East defaulted to the same address space as vNet-West (10.0.0.0/16).** It was changed to the lab's 10.1.0.0/16 to avoid overlap between the two VNets.
+- **The simulation subscription is "Surf City Boats."** The real subscription is "Azure subscription 1" — the real one was used for every resource.
