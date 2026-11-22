@@ -31,7 +31,7 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 - Result: "Resource group created — Creating resource group 'RG-Lab' in
   subscription 'Surf City Boats' succeeded" (simulation); real Azure confirmed
   "Creating resource group 'RG-Lab' in subscription 'Azure subscription 1' succeeded"
-- Screenshot: lab1-resource-group-screenshot.pdf
+- Screenshot: [lab1-resource-group-screenshot.pdf](lab1-resource-group-screenshot.pdf)
 - Note: a resource group is free.
 
 **Lab 2 — Deploy a Virtual Network and Subnet in West US (done in real Azure)**
@@ -138,7 +138,7 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 **Lab 23 — Configure Blob Storage Object Replication Between Regions (done in real Azure)**
 - Configure object replication so blobs in one region copy to the other.
 - Replication policy from surfcitywest999ag/images to surfcityeast999ag/images, Copy over = Everything (the portal's current wording for the lab's "All — New and updated"), 0 filters, tags/priority/metrics not enabled. Policy ID e718197e-2510-4c79-bb12-7ee7e42a07e4; Rule ID 7f87b8db-6e1f-4114-8721-b68c3eb5cc0b.
-- Replication verified live: test image lab23-test-image.png uploaded to the West container at 11:06 PM and appeared in the East container at 11:08 PM, about two minutes later.
+- Replication verified live: test image [lab23-test-image.png](lab23-test-image.png) uploaded to the West container at 11:06 PM and appeared in the East container at 11:08 PM, about two minutes later.
 - The labs assign Storage Blob Data Contributor to "Thomas Mitchell", but no such user exists in the tenant — so the role was assigned to the signed-in account instead on both storage accounts (needed for Entra ID auth uploads, since key access is disabled). If Thomas Mitchell is added to the tenant later, the same role can be assigned to him.
 
 ### Module 8 — Deploy and Configure Azure Front Door CDN
@@ -194,7 +194,7 @@ multi-region infrastructure, not just a single VM.
 
 ## Screenshots
 
-- Lab 1: lab1-resource-group-screenshot.pdf (simulation — RG-Lab in East US)
+- Lab 1: [lab1-resource-group-screenshot.pdf](lab1-resource-group-screenshot.pdf) (simulation — RG-Lab in East US)
 
 ## Next Steps
 
@@ -244,7 +244,7 @@ multi-region infrastructure, not just a single VM.
 - **The labs assign Storage Blob Data Contributor to "Thomas Mitchell", but no such user exists in the tenant.** The portal member search returned 0 results and the tenant's member list has no Thomas Mitchell. The role was assigned to the signed-in account instead on both storage accounts, which was needed for Entra ID auth uploads since key access is disabled. If Thomas Mitchell is added to the tenant later, the same role can be assigned to him.
 - **Azure Front Door cannot be created on a free trial subscription.** The first Lab 24 deployment was rejected: "Free Trial and Student account is forbidden for Azure Frontdoor resources." The subscription had to be upgraded to pay-as-you-go (approved by Jet) before the profile could be created. The upgrade kept the remaining $199.46 credit until Dec 21, 2026 and the free Basic support plan.
 - **The Front Door endpoint returned "Page not found — configuration not ready yet" for about 25 minutes after creation.** Back-to-back configuration changes (profile creation, then the second origin) take up to 30 minutes to propagate. The image served successfully once propagation finished — this was propagation delay, not a misconfiguration.
-- **The lab's test file images/15822998_m.jpg does not exist in the real storage accounts.** The West blob endpoint returns BlobNotFound for it. The Lab 23 test image (lab23-test-image.png) was used instead, since it is the only blob in the West "images" container.
+- **The lab's test file images/15822998_m.jpg does not exist in the real storage accounts.** The West blob endpoint returns BlobNotFound for it. The Lab 23 test image ([lab23-test-image.png](lab23-test-image.png)) was used instead, since it is the only blob in the West "images" container.
 - **Lab 26 cannot be finished because Jet does not own surfcityboats.com.** The custom domain img.surfcityboats.com was added to Front Door and sits at Validation Pending, needing a TXT record (_dnsauth.img.surfcityboats.com) that only the domain owner can add. surfcityboats.com is the course's fictional company domain, so the lab's GoDaddy steps cannot be done. No DNS zone was created and no records were added anywhere.
 - **Lab 29 cannot be finished for the same reason.** It needs a CNAME in GoDaddy DNS for surfcityboats.com (quote → scbwebsite.trafficmanager.net), and Jet does not own that domain. No domain was registered or bought, nothing was invented, and GoDaddy was not touched.
 - **The Lab 27 simulation rejected the real LB-West IP.** Its text-entry check expects the lab author's recorded IP, not the real 172.184.161.146. The real Azure portal accepted it with a green check and both endpoints went Online — the simulation quirk did not affect the real work.
