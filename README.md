@@ -162,14 +162,18 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 
 ### Module 9 — Deploy and Configure Azure Traffic Manager
 
-**Lab 27 — Create and Configure a Traffic Manager Profile in Azure** — next
+**Lab 27 — Create and Configure a Traffic Manager Profile in Azure (done in real Azure)**
 - Create and configure a Traffic Manager profile to route traffic between regions.
+- Traffic Manager profile **scbwebsite**, DNS name scbwebsite.trafficmanager.net, routing method Performance, record type A - IPv4, resource group location East US, status Enabled. Deployment succeeded Nov 22, 12:52 AM.
+- Endpoints (both External endpoint type, health checks enabled): Endpoint-West → 172.184.161.146 (LB-West frontend IP), West US, Enabled, Online; Endpoint-East → 48.217.132.155 (LB-East frontend IP), East US, Enabled, Online. DNS TTL 60 seconds; monitor HTTP port 80, path /, 30-second probing interval, 3 tolerated failures, 10-second probe timeout, expected status code 200.
 
-**Lab 28 — Confirm Functionality of Azure Traffic Manager** — next
+**Lab 28 — Confirm Functionality of Azure Traffic Manager (done in real Azure)**
 - Verify Traffic Manager routes traffic and fails over as expected.
+- http://scbwebsite.trafficmanager.net/testpage.htm initially returned "Server: EAST02" (Performance routing to East via LB-East). Failover test: Endpoint-East was temporarily disabled in Traffic Manager (no VM was stopped). While East was disabled, Google's public DNS resolver returned only 172.184.161.146 (LB-West), and a fresh browser request returned "Server: WEST01" — traffic failed over to the West region. Endpoint-East was then re-enabled. Final state: both endpoints Enabled and Online. A final test returned "Server: EAST01", matching the lab's own expected result.
 
-**Lab 29 — Configure a Custom Domain for Traffic Manager** — next
+**Lab 29 — Configure a Custom Domain for Traffic Manager (blocked)**
 - Configure a custom domain for the Traffic Manager profile.
+- Blocked: the lab asks for a CNAME record in GoDaddy DNS Management for surfcityboats.com — Name "quote", Value "scbwebsite.trafficmanager.net", TTL 1/2 Hour — making quote.surfcityboats.com point at the Traffic Manager profile. Jet does not own surfcityboats.com and has no GoDaddy DNS access for it. No domain was registered or bought, nothing was invented, and GoDaddy was not touched. To finish, Jet would need to own surfcityboats.com (or its GoDaddy DNS access) and add that CNAME, or choose a domain he does own.
 
 ## Why It Matters
 
@@ -216,6 +220,8 @@ multi-region infrastructure, not just a single VM.
 - **Both storage accounts are Standard RA-GRS.** The lab text did not state performance or redundancy; the Lab 22 simulation showed Standard performance with geo-redundant storage and read access, so both accounts were created that way.
 - **Front Door Standard tier, with both storage accounts as origins.** The west storage account is the first origin and the east storage account is the second origin, both priority 1 and weight 1000, so Front Door can fail over between regions. This Front Door serves the blob images, not the IIS page — the VMs/load balancers handle the web traffic.
 - **The subscription was upgraded to pay-as-you-go for the Front Door labs.** Azure refuses Front Door on a free trial subscription, so the upgrade was required. The remaining $199.46 credit stays good until Dec 21, 2026 and charges draw from it first. The Front Door profile will be deleted once documented, so the ~$35/month charge does not continue.
+- **Traffic Manager Performance routing, with the load balancer frontends as endpoints.** The two endpoints are the public IPs of LB-West and LB-East, so Traffic Manager routes each user to the nearest healthy region and fails over if one region stops responding. The endpoints are External type because the load balancers are public IPs, not Azure resources Traffic Manager manages directly.
+- **The failover test disabled the endpoint in Traffic Manager instead of stopping a VM.** Disabling Endpoint-East proved traffic reroutes to West without touching any VM — the VMs stayed running and the endpoint was re-enabled afterward.
 
 ## What Went Wrong
 
@@ -238,3 +244,6 @@ multi-region infrastructure, not just a single VM.
 - **The Front Door endpoint returned "Page not found — configuration not ready yet" for about 25 minutes after creation.** Back-to-back configuration changes (profile creation, then the second origin) take up to 30 minutes to propagate. The image served successfully once propagation finished — this was propagation delay, not a misconfiguration.
 - **The lab's test file images/15822998_m.jpg does not exist in the real storage accounts.** The West blob endpoint returns BlobNotFound for it. The Lab 23 test image (lab23-test-image.png) was used instead, since it is the only blob in the West "images" container.
 - **Lab 26 cannot be finished because Jet does not own surfcityboats.com.** The custom domain img.surfcityboats.com was added to Front Door and sits at Validation Pending, needing a TXT record (_dnsauth.img.surfcityboats.com) that only the domain owner can add. surfcityboats.com is the course's fictional company domain, so the lab's GoDaddy steps cannot be done. No DNS zone was created and no records were added anywhere.
+- **Lab 29 cannot be finished for the same reason.** It needs a CNAME in GoDaddy DNS for surfcityboats.com (quote → scbwebsite.trafficmanager.net), and Jet does not own that domain. No domain was registered or bought, nothing was invented, and GoDaddy was not touched.
+- **The Lab 27 simulation rejected the real LB-West IP.** Its text-entry check expects the lab author's recorded IP, not the real 172.184.161.146. The real Azure portal accepted it with a green check and both endpoints went Online — the simulation quirk did not affect the real work.
+- **Stale DNS cache made the failover test look wrong at first.** After disabling Endpoint-East, repeat loads still showed EAST02 for a few minutes because of a cached DNS answer. A fresh lookup after the cache expired showed WEST01, proving the failover. DNS TTL (60 seconds) and local caching both matter when testing failover.
