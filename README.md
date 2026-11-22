@@ -148,6 +148,7 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 - Front Door profile **WebsiteImages**, Azure Front Door Standard tier, Quick Create, RG-Lab. Endpoint name "images", hostname images-etc9c7ckagaqghgv.z03.azurefd.net (Provision succeeded, Enabled). Front Door ID 4e65b6c1-3165-4eef-87e5-4614a0cdd098. Origin type Storage (Azure Blobs), origin host surfcitywest999ag.blob.core.windows.net, caching enabled with "Use Query String", compression enabled. Deployment succeeded Nov 21, 11:39 PM.
 - This lab required upgrading the subscription from the free trial to pay-as-you-go first — Azure refuses Front Door on a trial subscription ("Free Trial and Student account is forbidden for Azure Frontdoor resources"). The upgrade was approved by Jet, used the payment method already on file, kept the free Basic support plan, and the remaining $199.46 credit stays good until Dec 21, 2026.
 - The lab writes the origin host as surfcitywest999.blob.core.windows.net, but the real storage account is surfcitywest999ag, so the portal's dropdown value was used.
+- Deleted Nov 22, 12:33 AM, after the work was documented in this README — the profile billed about $35/month, so it was removed to stop the charge. The deletion was verified: RG-Lab shows no WebsiteImages resource and the subscription's Front Door list is empty.
 
 **Lab 25 — Add a Second Origin to the Azure Front Door CDN (done in real Azure)**
 - Add the second region as another origin so Front Door can fail over between regions.
