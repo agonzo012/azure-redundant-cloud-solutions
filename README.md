@@ -175,6 +175,8 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 - Configure a custom domain for the Traffic Manager profile.
 - Blocked: the lab asks for a CNAME record in GoDaddy DNS Management for surfcityboats.com — Name "quote", Value "scbwebsite.trafficmanager.net", TTL 1/2 Hour — making quote.surfcityboats.com point at the Traffic Manager profile. Jet does not own surfcityboats.com and has no GoDaddy DNS access for it. No domain was registered or bought, nothing was invented, and GoDaddy was not touched. To finish, Jet would need to own surfcityboats.com (or its GoDaddy DNS access) and add that CNAME, or choose a domain he does own.
 
+**Cleanup — RG-Lab deleted Nov 22, 1:19 AM, after all 29 labs were documented in this README.** The whole resource group (33 resources: 4 VMs, 2 load balancers, 2 NAT gateways, Bastion, VNets, storage accounts, Traffic Manager profile, NSGs, public IPs) was deleted to stop the ~$1.30/hour burn. Verified: the subscription's resource group list now shows only AlvinLab-RG and NetworkWatcherRG. Nothing outside RG-Lab was touched.
+
 ## Why It Matters
 
 Real enterprise applications can't go down when a region has an outage.
