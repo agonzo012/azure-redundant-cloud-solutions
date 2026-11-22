@@ -143,14 +143,21 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 
 ### Module 8 — Deploy and Configure Azure Front Door CDN
 
-**Lab 24 — Deploy and Configure an Azure Front Door CDN Profile** — next
+**Lab 24 — Deploy and Configure an Azure Front Door CDN Profile (done in real Azure)**
 - Deploy and configure an Azure Front Door CDN profile to route users to the nearest region.
+- Front Door profile **WebsiteImages**, Azure Front Door Standard tier, Quick Create, RG-Lab. Endpoint name "images", hostname images-etc9c7ckagaqghgv.z03.azurefd.net (Provision succeeded, Enabled). Front Door ID 4e65b6c1-3165-4eef-87e5-4614a0cdd098. Origin type Storage (Azure Blobs), origin host surfcitywest999ag.blob.core.windows.net, caching enabled with "Use Query String", compression enabled. Deployment succeeded Nov 21, 11:39 PM.
+- This lab required upgrading the subscription from the free trial to pay-as-you-go first — Azure refuses Front Door on a trial subscription ("Free Trial and Student account is forbidden for Azure Frontdoor resources"). The upgrade was approved by Jet, used the payment method already on file, kept the free Basic support plan, and the remaining $199.46 credit stays good until Dec 21, 2026.
+- The lab writes the origin host as surfcitywest999.blob.core.windows.net, but the real storage account is surfcitywest999ag, so the portal's dropdown value was used.
 
-**Lab 25 — Add a Second Origin to the Azure Front Door CDN** — next
+**Lab 25 — Add a Second Origin to the Azure Front Door CDN (done in real Azure)**
 - Add the second region as another origin so Front Door can fail over between regions.
+- Second origin "surfcityeast" added to default-origin-group: origin host surfcityeast999ag.blob.core.windows.net, certificate subject name validation Disabled, HTTP 80 / HTTPS 443, priority 1, weight 1000, origin enabled. Portal confirmed "Successfully updated the origin group 'default-origin-group'." Both origins are in place, both Enabled, priority 1, weight 1000. Health probes enabled (HTTP, path /, HEAD, 100-second interval).
+- Endpoint test: the Front Door endpoint initially returned "Page not found — configuration not ready yet" while the back-to-back changes propagated (up to 30 minutes). At 12:11 AM Nov 22, https://images-etc9c7ckagaqghgv.z03.azurefd.net/images/lab23-test-image.png served the image successfully. The lab's test file images/15822998_m.jpg does not exist in the real storage accounts, so the Lab 23 test image was used instead. Note: this Front Door endpoint serves blob images, not the IIS page — the IIS page lives on the VMs/load balancers.
 
-**Lab 26 — Configure a Custom Domain Name for AFD CDN** — next
+**Lab 26 — Configure a Custom Domain Name for AFD CDN (done up to DNS validation; blocked)**
 - Configure a custom domain name for the Front Door CDN endpoint.
+- Custom domain img.surfcityboats.com was added to the Front Door profile (resource img-surfcityboats-com-9bf7, Provisioning Succeeded, AFD managed certificate, TLS 1.2_2023), using "All other DNS services" so no Azure DNS zone was created. It shows Validation state Pending, Endpoint association Unassociated, Certificate state "Domain validation needed".
+- Blocked: validation requires a TXT record (_dnsauth.img.surfcityboats.com = _piovqz23xh2afl12ojjvi7wfhfmlu19) plus the lab's GoDaddy name-server delegation and a CNAME to the Front Door endpoint — and Jet does not own surfcityboats.com (it is the course's fictional company domain) and has no GoDaddy DNS access. No DNS zone was created and no DNS records were added anywhere; no domain was registered, bought, or invented. To finish, whoever controls surfcityboats.com would add that TXT record, wait for validation, then add the CNAME.
 
 ### Module 9 — Deploy and Configure Azure Traffic Manager
 
@@ -206,6 +213,8 @@ multi-region infrastructure, not just a single VM.
 - **Storage account key access disabled; uploads use Entra ID auth.** With key access off, blob uploads need a role assignment (Storage Blob Data Contributor) rather than a key — a more secure pattern than the lab's key-based default.
 - **Storage account names carry an "ag" suffix.** The lab's names surfcitywest999 and surfcityeast999 were already taken globally (storage account names must be unique worldwide), so "ag" was added to both.
 - **Both storage accounts are Standard RA-GRS.** The lab text did not state performance or redundancy; the Lab 22 simulation showed Standard performance with geo-redundant storage and read access, so both accounts were created that way.
+- **Front Door Standard tier, with both storage accounts as origins.** The west storage account is the first origin and the east storage account is the second origin, both priority 1 and weight 1000, so Front Door can fail over between regions. This Front Door serves the blob images, not the IIS page — the VMs/load balancers handle the web traffic.
+- **The subscription was upgraded to pay-as-you-go for the Front Door labs.** Azure refuses Front Door on a free trial subscription, so the upgrade was required. The remaining $199.46 credit stays good until Dec 21, 2026 and charges draw from it first. The Front Door profile will be deleted once documented, so the ~$35/month charge does not continue.
 
 ## What Went Wrong
 
@@ -224,3 +233,7 @@ multi-region infrastructure, not just a single VM.
 - **The VM size quotas are now fully used in both regions.** The Standard Dsv7 family vCPU quota in East US is exhausted (0 of 4 remain) after EAST01 and EAST02, and D2s_v6 in West US shows insufficient regional quota for new deployments. No more VMs are needed for the labs, so this blocks nothing — but no additional VM can be created in either region without a quota increase.
 - **Repeated refreshes from one browser did NOT alternate between backends.** Azure's load balancer distributes by a 5-tuple hash (source IP, source port, destination IP, destination port, protocol), so one client gets pinned to one backend. This is expected Azure behavior, not a misconfiguration. To prove both backends serve, a second client (another VM) was used, and the failover test — stopping IIS on one VM and watching traffic reroute to the other — proved the load balancer works.
 - **The labs assign Storage Blob Data Contributor to "Thomas Mitchell", but no such user exists in the tenant.** The portal member search returned 0 results and the tenant's member list has no Thomas Mitchell. The role was assigned to the signed-in account instead on both storage accounts, which was needed for Entra ID auth uploads since key access is disabled. If Thomas Mitchell is added to the tenant later, the same role can be assigned to him.
+- **Azure Front Door cannot be created on a free trial subscription.** The first Lab 24 deployment was rejected: "Free Trial and Student account is forbidden for Azure Frontdoor resources." The subscription had to be upgraded to pay-as-you-go (approved by Jet) before the profile could be created. The upgrade kept the remaining $199.46 credit until Dec 21, 2026 and the free Basic support plan.
+- **The Front Door endpoint returned "Page not found — configuration not ready yet" for about 25 minutes after creation.** Back-to-back configuration changes (profile creation, then the second origin) take up to 30 minutes to propagate. The image served successfully once propagation finished — this was propagation delay, not a misconfiguration.
+- **The lab's test file images/15822998_m.jpg does not exist in the real storage accounts.** The West blob endpoint returns BlobNotFound for it. The Lab 23 test image (lab23-test-image.png) was used instead, since it is the only blob in the West "images" container.
+- **Lab 26 cannot be finished because Jet does not own surfcityboats.com.** The custom domain img.surfcityboats.com was added to Front Door and sits at Validation Pending, needing a TXT record (_dnsauth.img.surfcityboats.com) that only the domain owner can add. surfcityboats.com is the course's fictional company domain, so the lab's GoDaddy steps cannot be done. No DNS zone was created and no records were added anywhere.
