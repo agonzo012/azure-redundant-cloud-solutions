@@ -71,7 +71,7 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 
 **Lab 9 — Deploy and Configure a Public Load Balancer in East US (done in real Azure)**
 - Deploy and configure a public load balancer to spread traffic across the east-region VMs.
-- Load balancer **LB-East**, RG-Lab, East US, SKU Standard, Type Public. Frontend **FE-LBEast**, public IP **PIP-LBEast** (Static, Standard, IPv4). Backend pool **BE-LBEast** (vNet-East, IP address configuration as the lab specifies), currently empty — no VMs exist yet. Health probe **HealthHTTP** (HTTP, port 80). Load balancing rule **InboundHTTP** (TCP, frontend port 80 → backend port 80, TCP Reset enabled).
+- Load balancer **LB-East**, RG-Lab, East US, SKU Standard, Type Public. Frontend **FE-LBEast**, public IP **PIP-LBEast** (Static, Standard, IPv4). Backend pool **BE-LBEast** (vNet-East, IP address configuration as the lab specifies) — EAST01 added in Lab 14; EAST02 follows in Lab 16. Health probe **HealthHTTP** (HTTP, port 80). Load balancing rule **InboundHTTP** (TCP, frontend port 80 → backend port 80, TCP Reset enabled).
 
 ### Module 4 — Deploy Resilient Azure VMs in West US
 
@@ -93,11 +93,13 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 
 ### Module 5 — Deploy Resilient Azure VMs in East US
 
-**Lab 14 — Deploy and Configure the EAST01 Virtual Machine** — next
+**Lab 14 — Deploy and Configure the EAST01 Virtual Machine (done in real Azure)**
 - Deploy and configure the first virtual machine in East US.
+- VM **EAST01**, RG-Lab, East US, Running. OS: Windows Server 2019 Datacenter Gen2. Size **Standard_D2s_v7** (2 vCPUs, 8 GiB) at $0.2240/hour — both the lab's Standard_D2s_v3 and the west fallback Standard_D2s_v6 are unavailable in East US for this subscription, so the next-generation equivalent was used (same 2 vCPUs and 8 GiB). Availability set **AvailSet-East** (new), fault domain 0. vNet **vNet-East**, subnet **Subnet-East** (10.1.1.0/24); NIC **east01565**, private IP **10.1.1.4**, no NIC-level public IP (public IP quota exhausted). NSG **EAST01-nsg** (new, Advanced) with inbound rules AllowHTTP (TCP 80, priority 100) and default-allow-rdp (TCP 3389, priority 1000). Added to load balancer **LB-East**, backend pool **BE-LBEast**. OS disk Standard SSD. Admin username **labadmin**, same password as the west VMs per the standing rule.
 
-**Lab 15 — Install IIS on EAST01 Remotely via PowerShell** — next
+**Lab 15 — Install IIS on EAST01 Remotely via PowerShell (done in real Azure)**
 - Install the IIS web server on EAST01 remotely using PowerShell.
+- Run Command (RunPowerShellScript): `Install-WindowsFeature -Name Web-Server -IncludeManagementTools`. Result: Success, no restart needed. W3SVC service Running; HTTP GET http://localhost returned 200. Verified publicly: the default IIS welcome page loads at http://48.217.132.155/ — the LB-East frontend IP.
 
 **Lab 16 — Deploy and Configure the EAST02 Virtual Machine** — next
 - Deploy and configure the second virtual machine in East US.
@@ -184,6 +186,7 @@ multi-region infrastructure, not just a single VM.
 - **VM size D2s_v6 instead of the lab's D2s_v3.** Azure refused D2s_v3 in West US for this subscription, so the current-generation equivalent was used — same 2 vCPUs and 8 GiB of RAM, effectively the same price. The lab's intent (a small general-purpose VM) is unchanged.
 - **No public IP on the WEST01 network interface.** The subscription's public IP quota is exhausted (four public IPs already exist), so WEST01 was created without a NIC-level public IP. It is reached through the LB-West frontend IP instead, which matches the design: VMs stay private behind the load balancer, and the NAT gateway handles outbound traffic.
 - **Both west VMs in one availability set, in different fault domains.** WEST01 is fault domain 0 and WEST02 is fault domain 1, so a single rack-level failure cannot take both web servers down at once. That is the availability set doing its job.
+- **EAST01 uses D2s_v7.** Both D2s_v3 and D2s_v6 are unavailable in East US for this subscription, so the next-generation equivalent was used — same 2 vCPUs and 8 GiB, slightly higher at $0.2240/hour vs $0.1930/hour for D2s_v6. The lab's intent (a small general-purpose VM) is unchanged; the east and west VMs do not need identical sizes.
 
 ## What Went Wrong
 
@@ -197,3 +200,5 @@ multi-region infrastructure, not just a single VM.
 - **Lab 10's size Standard_D2s_v3 is unavailable in West US for this subscription.** Azure refused it ("NotAvailableForSubscription"). The current-generation equivalent Standard_D2s_v6 was used instead — same 2 vCPUs and 8 GiB, effectively the same price ($153.30/month vs $152.57/month).
 - **The subscription's public IP quota is exhausted (0 of 3 remain).** WEST01 could not get its own public IP, so Public IP was left as None. The VM is still publicly reachable through the LB-West frontend IP, and the lab's written steps do not specify a NIC public IP.
 - **The NSG carries the portal's default RDP rule alongside the lab-required HTTP rule.** The Basics inbound-ports default adds allow-RDP (TCP 3389, priority 1000); the lab's allow-HTTP rule (TCP 80, priority 1010) sits beside it.
+- **Both D2s_v3 and D2s_v6 are unavailable in East US for this subscription.** EAST01 uses D2s_v7 instead — verified in the portal size picker under both Trusted Launch and Standard security. Same 2 vCPUs and 8 GiB, $0.2240/hour.
+- **The OS disk type selection did not stick on the first pass for EAST01.** The first Review page showed Premium SSD even though Standard SSD had been selected. It was caught on review, re-selected to Standard SSD, and verified on the final Review page before creating. Always check the Review page, not just the form.
