@@ -53,11 +53,14 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 
 ### Module 2 — Deploy Azure Bastion
 
-**Lab 6 — Connect Virtual Networks with vNet Peering** — next
+**Lab 6 — Connect Virtual Networks with vNet Peering (done in real Azure)**
 - Connect the West US and East US virtual networks so they can talk to each other.
+- Peering **vNetEast-vNetWest** on vNet-West and reciprocal peering **vNetWest-vNetEast** on vNet-East, both Fully Synchronized and Connected, virtual network access and forwarded traffic enabled in both directions.
 
-**Lab 7 — Perform an Automated Azure Bastion Deployment** — next
+**Lab 7 — Perform an Automated Azure Bastion Deployment (done in real Azure)**
 - Deploy Azure Bastion automatically for secure RDP/SSH access to the VMs without public IPs.
+- Bastion host **vNet-West-bastion**, RG-Lab, West US, SKU Standard, Provisioning Succeeded. The automated flow auto-created the **AzureBastionSubnet** and public IP **vNet-West-IPv4**.
+- Cost note: the automated flow fixes the SKU at Standard ($0.29/hour) with no SKU choice, so the free Developer SKU could not be used here. Delete the Bastion host when it is no longer needed to stop the hourly charge.
 
 ### Module 3 — Deploy and Configure Load Balancers
 
@@ -178,3 +181,5 @@ multi-region infrastructure, not just a single VM.
 - **Portal defaulted regions to West US 2 / East US 2.** The lab specifies West US and East US, so the exact regions were selected instead of accepting the defaults.
 - **vNet-East defaulted to the same address space as vNet-West (10.0.0.0/16).** It was changed to the lab's 10.1.0.0/16 to avoid overlap between the two VNets.
 - **The simulation subscription is "Surf City Boats."** The real subscription is "Azure subscription 1" — the real one was used for every resource.
+- **The current portal's Add Peering form creates both directions in one operation.** The lab shows two separate steps; the form takes the local and remote link names together, so both peerings were set in one form with no lab value changed.
+- **The automated Bastion deployment fixes the SKU at Standard ($0.29/hour).** The lab does not name a SKU, and the automated flow offers no SKU choice. The free Developer SKU is only offered in the VM-connect flow, which needs a VM selected — there are no VMs yet, so it could not be used. The Bastion host will be deleted when it is no longer needed to stop the hourly charge.
