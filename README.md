@@ -66,7 +66,7 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 
 **Lab 8 — Deploy and Configure a Public Load Balancer in West US (done in real Azure)**
 - Deploy and configure a public load balancer to spread traffic across the west-region VMs.
-- Load balancer **LB-West**, RG-Lab, West US, SKU Standard, Type Public. Frontend **FE-LBWest**, public IP **PIP-LBWest** (Static, Standard, IPv4). Backend pool **BE-LBWest** (vNet-West, NIC-based), currently empty — no VMs exist yet; WEST01 and WEST02 are added in later labs. Health probe **HealthHTTP** (HTTP, port 80). Load balancing rule **InboundHTTP** (TCP, frontend port 80 → backend port 80, TCP Reset off).
+- Load balancer **LB-West**, RG-Lab, West US, SKU Standard, Type Public. Frontend **FE-LBWest**, public IP **PIP-LBWest** (Static, Standard, IPv4). Backend pool **BE-LBWest** (vNet-West, NIC-based) — WEST01 added in Lab 10; WEST02 follows in Lab 12. Health probe **HealthHTTP** (HTTP, port 80). Load balancing rule **InboundHTTP** (TCP, frontend port 80 → backend port 80, TCP Reset off).
 - Note: Lab 8 does not name the frontend, public IP, backend pool, probe, or rule, so the Lab 9 naming pattern was used for consistency.
 
 **Lab 9 — Deploy and Configure a Public Load Balancer in East US (done in real Azure)**
@@ -75,11 +75,13 @@ Course page: https://labitpro.com/hands-on-azure-labs-building-redundant-cloud-s
 
 ### Module 4 — Deploy Resilient Azure VMs in West US
 
-**Lab 10 — Deploy and Configure the WEST01 Virtual Machine** — next
+**Lab 10 — Deploy and Configure the WEST01 Virtual Machine (done in real Azure)**
 - Deploy and configure the first virtual machine in West US.
+- VM **WEST01**, RG-Lab, West US, Running. OS: Windows Server 2019 Datacenter Gen2. Size **Standard_D2s_v6** (2 vCPUs, 8 GiB) at $0.21/hour — the lab's Standard_D2s_v3 is unavailable in West US for this subscription, so the current-generation equivalent was used (same 2 vCPUs and 8 GiB, effectively the same price). Availability set **AvailSet-West** (new). vNet **vNet-West**, subnet **Subnet-West** (10.0.1.0/24); NIC **west01502**, private IP **10.0.1.4**, no NIC-level public IP — the subscription's public IP quota is exhausted, so the VM is reached through the LB-West frontend IP instead. NSG **WEST01-nsg** (new, Advanced) with inbound rules allow RDP (TCP 3389, portal default) and allow HTTP (TCP 80, lab-required). Added to load balancer **LB-West**, backend pool **BE-LBWest**. OS disk Premium SSD, 127 GiB. Admin username **labadmin**.
 
-**Lab 11 — Install IIS on WEST01 Remotely via PowerShell** — next
+**Lab 11 — Install IIS on WEST01 Remotely via PowerShell (done in real Azure)**
 - Install the IIS web server on WEST01 remotely using PowerShell.
+- Run Command (RunPowerShellScript): `Install-WindowsFeature -Name Web-Server -IncludeManagementTools`. Result: Success, no restart needed. W3SVC service Running; Web-Server feature Installed; HTTP GET http://localhost returned 200. Verified publicly: the default IIS welcome page loads at http://172.184.161.146/ — the LB-West frontend IP, proving the load balancer is already serving traffic from WEST01.
 
 **Lab 12 — Deploy and Configure the WEST02 Virtual Machine** — next
 - Deploy and configure the second virtual machine in West US.
@@ -177,6 +179,8 @@ multi-region infrastructure, not just a single VM.
 - **One resource group (RG-Lab) for the whole project.** Everything for the redundant app lives in one group, so it can be deleted in a single step to stop all charges when the labs are finished.
 - **A NAT gateway in each region.** The VMs get outbound internet through the NAT gateway instead of carrying their own public IPs, which keeps the VM network interfaces private.
 - **StandardV2 NAT gateway SKU (portal default).** No premium tier is needed for a lab; the standard SKU covers the outbound traffic the labs generate.
+- **VM size D2s_v6 instead of the lab's D2s_v3.** Azure refused D2s_v3 in West US for this subscription, so the current-generation equivalent was used — same 2 vCPUs and 8 GiB of RAM, effectively the same price. The lab's intent (a small general-purpose VM) is unchanged.
+- **No public IP on the WEST01 network interface.** The subscription's public IP quota is exhausted (four public IPs already exist), so WEST01 was created without a NIC-level public IP. It is reached through the LB-West frontend IP instead, which matches the design: VMs stay private behind the load balancer, and the NAT gateway handles outbound traffic.
 
 ## What Went Wrong
 
@@ -187,3 +191,6 @@ multi-region infrastructure, not just a single VM.
 - **The current portal's Add Peering form creates both directions in one operation.** The lab shows two separate steps; the form takes the local and remote link names together, so both peerings were set in one form with no lab value changed.
 - **The automated Bastion deployment fixes the SKU at Standard ($0.29/hour).** The lab does not name a SKU, and the automated flow offers no SKU choice. The free Developer SKU is only offered in the VM-connect flow, which needs a VM selected — there are no VMs yet, so it could not be used. The Bastion host will be deleted when it is no longer needed to stop the hourly charge.
 - **The portal defaulted LB-West's region to East US.** RG-Lab itself is located in East US, so the load balancer form defaulted there. It was caught before anything was deployed — the backend pool's virtual network list only offered vNet-East — and the region was set to West US explicitly. Nothing was ever deployed in the wrong region.
+- **Lab 10's size Standard_D2s_v3 is unavailable in West US for this subscription.** Azure refused it ("NotAvailableForSubscription"). The current-generation equivalent Standard_D2s_v6 was used instead — same 2 vCPUs and 8 GiB, effectively the same price ($153.30/month vs $152.57/month).
+- **The subscription's public IP quota is exhausted (0 of 3 remain).** WEST01 could not get its own public IP, so Public IP was left as None. The VM is still publicly reachable through the LB-West frontend IP, and the lab's written steps do not specify a NIC public IP.
+- **The NSG carries the portal's default RDP rule alongside the lab-required HTTP rule.** The Basics inbound-ports default adds allow-RDP (TCP 3389, priority 1000); the lab's allow-HTTP rule (TCP 80, priority 1010) sits beside it.
